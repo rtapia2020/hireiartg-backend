@@ -1,6 +1,10 @@
 
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 const pdfParse = require('pdf-parse');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 module.exports = async function(req, res) {
   try {
@@ -10,11 +14,6 @@ module.exports = async function(req, res) {
     const text = (await pdfParse(file.data)).text;
 
     console.log("📄 Texto extraído del PDF:", text.slice(0, 300)); // Primeros 300 caracteres
-
-    const configuration = new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const openai = new OpenAIApi(configuration);
 
     const prompt = `
 Eres un reclutador de tecnología. Resume el siguiente currículum en 3 frases, da un puntaje general del 0 al 100 según su compatibilidad con un perfil tech senior, extrae 5 habilidades principales y da una recomendación si sería buena contratación.
@@ -32,13 +31,13 @@ Devuelve el resultado en formato JSON con estas claves:
 }
 `;
 
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
     });
 
-    const raw = completion.data.choices[0].message.content;
+    const raw = completion.choices[0].message.content;
     console.log("🧠 Respuesta cruda de OpenAI:", raw);
 
     let parsed;
