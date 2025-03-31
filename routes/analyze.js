@@ -9,6 +9,8 @@ module.exports = async function(req, res) {
 
     const text = (await pdfParse(file.data)).text;
 
+    console.log("📄 Texto extraído del PDF:", text.slice(0, 300)); // Primeros 300 caracteres
+
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -37,11 +39,23 @@ Devuelve el resultado en formato JSON con estas claves:
     });
 
     const raw = completion.data.choices[0].message.content;
-    const parsed = JSON.parse(raw);
+    console.log("🧠 Respuesta cruda de OpenAI:", raw);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (parseError) {
+      console.error("❌ Error al hacer JSON.parse:", parseError.message);
+      return res.status(500).json({
+        error: "Error al convertir respuesta de OpenAI a JSON",
+        raw,
+      });
+    }
+
     res.json(parsed);
 
   } catch (err) {
-    console.error(err);
+    console.error("🔥 Error general en el análisis:", err);
     res.status(500).json({ error: 'Error al analizar el CV', details: err.message });
   }
 };
